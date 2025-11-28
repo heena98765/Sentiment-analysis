@@ -3,35 +3,65 @@
 The diagram below shows a basic end-to-end workflow for a sentiment analysis tool. Preview this file on GitHub to see the rendered Mermaid diagram.
 
 ```mermaid
-graph TB
-  User["User Input / Client"] -->|submit text| API["API / UI"]
-  API --> Collector["Data Collector / Ingest"]
-  Collector --> Preproc["Preprocessing\n(tokenize, clean, normalize)"]
-  Preproc --> Feat["Feature Extraction\n(TF-IDF / embeddings)"]
-  Feat --> Model["Model (Training / Inference)"]
-  Model --> Post["Postprocessing\n(label, score, thresholds)"]
-  Post --> API
-
-  %% Storage and model registry
-  Collector -->|store raw| Storage["Storage / DB\n(raw + metadata)"]
-  Feat -->|store features| Storage
-  Model -->|persist model| ModelReg["Model Registry / Artifacts"]
-  ModelReg --> Model
-
-  %% Monitoring and feedback
-  Monitor["Monitoring & Metrics"] <--|telemetry| API
-  Monitor <--|metrics| Model
-  API -->|user feedback| Feedback["Feedback Loop"]
-  Feedback --> Collector
-
-  %% Optional: retraining path
-  Feedback --> Retrain["Retraining Pipeline"]
-  Retrain --> ModelReg
-  Retrain --> Model
-
-  style Storage fill:#f9f,stroke:#333,stroke-width:1px
-  style ModelReg fill:#ff9,stroke:#333,stroke-width:1px
-  style Monitor fill:#9ff,stroke:#333,stroke-width:1px
+flowchart TB
+ 
+    %% --- DEVELOPER INPUT ---
+    Developer([Developer])
+ 
+    %% --- EXTERNAL DATA EXTRACTION ---
+    ExternalExtraction([Extracts doc links from external sources using Tavily])
+    Developer --> ExternalExtraction
+ 
+    ExternalDocs([Surveys / Reports from External Sources])
+    ExternalExtraction --> ExternalDocs
+ 
+    %% --- INTERNAL DATA COLLECTION ---
+    InternalCollection([Collects data from internal sources - Notes / Surveys / Reports])
+    Developer --> InternalCollection
+ 
+    InternalDocs([Surveys / Reports from Internal Sources])
+    InternalCollection --> InternalDocs
+ 
+    %% --- STORAGE OF RAW DATA ---
+    StoreRaw([Store documents from links and internal sources in Azure Blob Storage])
+    ExternalDocs --> StoreRaw
+    InternalDocs --> StoreRaw
+ 
+    %% --- DATA PREPROCESSING ---
+    Preprocess([Data Preprocessing - Cleaning, Filtering, Collation, Text Extraction])
+    StoreRaw --> Preprocess
+ 
+    StoreProcessed([Store processed text file in Azure Blob Storage])
+    Preprocess --> StoreProcessed
+ 
+    %% --- SENTIMENT ANALYSIS ---
+    Sentiment([Sentiment Analysis using Azure OpenAI + Prompt Engineering])
+    Preprocess --> Sentiment
+ 
+    Reports([External & Internal Theme-wise Summary Reports])
+    Sentiment --> Reports
+ 
+    StoreReports([Store generated reports in Azure Blob Storage])
+    Reports --> StoreReports
+ 
+    %% --- REPORT VALIDATION ---
+    Validation([Report Validation using LangSmith])
+    Reports --> Validation
+ 
+    ValidationSummary([Validation Summary])
+    Validation --> ValidationSummary
+ 
+    %% --- REPORT COMPARISON ---
+    Comparison([Report Comparison using Azure OpenAI + Prompt Engineering])
+    Validation --> Comparison
+ 
+    Consolidated([Consolidated Report Comparing Internal & External Sentiments])
+    Comparison --> Consolidated
+ 
+    %% --- PARALLEL PROMPT TESTING ---
+    ParallelTesting([Parallel Prompt Testing using Copilot and GridGPT])
+    Sentiment -.-> ParallelTesting
+    Comparison -.-> ParallelTesting
 ```
 
 Notes:
