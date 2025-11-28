@@ -2,6 +2,7 @@
 
 The diagram below shows a basic end-to-end workflow for a sentiment analysis tool. Preview this file on GitHub to see the rendered Mermaid diagram.
 
+````markdown
 ```mermaid
 graph TB
   User["User Input / Client"] -->|submit text| API["API / UI"]
@@ -32,7 +33,6 @@ graph TB
   style Storage fill:#f9f,stroke:#333,stroke-width:1px
   style ModelReg fill:#ff9,stroke:#333,stroke-width:1px
   style Monitor fill:#9ff,stroke:#333,stroke-width:1px
-
 ```
 
 Notes:
