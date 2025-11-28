@@ -2,7 +2,6 @@
 
 The diagram below shows a basic end-to-end workflow for a sentiment analysis tool. Preview this file on GitHub to see the rendered Mermaid diagram.
 
-````markdown
 ```mermaid
 graph TB
   User["User Input / Client"] -->|submit text| API["API / UI"]
