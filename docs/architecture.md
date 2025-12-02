@@ -54,8 +54,6 @@ flowchart TB
     %% ============================
     PREPROC([Data Preprocessing and Chunk Creation
     Cleaning and filtering
-    OCR if needed
-    Normalization
     Create text chunks with metadata])
 
     META_LAYER --> PREPROC
