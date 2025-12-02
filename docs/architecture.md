@@ -5,75 +5,123 @@ The diagram below shows a basic end-to-end workflow for a sentiment analysis too
 ```mermaid
 flowchart TB
 
-    %% ================
-    %% INGESTION
-    %% ================
-
+    %% ============================
+    %% ACTORS
+    %% ============================
     DEV([Developer])
 
+    %% ============================
+    %% INPUT SOURCES
+    %% ============================
     EXT_SOURCES([External Sources: gov.uk, Ofgem, YouGov])
-    INT_SOURCES([Internal Sources: Yonder Notes/Surveys/Reports])
+    INT_SOURCES([Internal Sources: Yonder Notes, Surveys, Reports])
 
     DEV --> EXT_SOURCES
     DEV --> INT_SOURCES
 
     EXT_SOURCES -->|Extract links via Tavily| TAVILY([Tavily API])
-    TAVILY -->|Download documents| RAW_DOCS_EXT([External PDF/Excel/CSV])
+    TAVILY -->|Download documents| EXT_DOCS([External Reports: PDF, Excel, CSV])
 
-    INT_SOURCES -->|Upload internal files| RAW_DOCS_INT([Internal PDF/Excel/CSV])
+    INT_SOURCES -->|Collect internal documents| INT_DOCS([Internal Reports: PDF, Excel, CSV])
 
 
-    %% ================
-    %% AZURE STORAGE
-    %% ================
-    subgraph BLOB[Azure Blob Storage]
-        RAW_RAW[raw - Original Documents]
-        META_STORE[metadata - Document and Chunk Metadata]
-        PROC_STORE[processed_chunks - Processed Text with Metadata]
+    %% ============================
+    %% RAW DOCUMENT STORAGE
+    %% ============================
+    subgraph BLOB1[Azure Blob Storage]
+        RAW_STORE[Store original documents]
     end
 
-    RAW_DOCS_EXT --> RAW_RAW
-    RAW_DOCS_INT --> RAW_RAW
-
-
-    %% ============================
-    %% METADATA & LINEAGE LAYER
-    %% ============================
-    META_LAYER([Metadata Extraction and Lineage Tracking
-    Assign document_id
-    Capture source link or file path
-    Extract page numbers and offsets
-    Generate chunk metadata])
-
-    RAW_RAW --> META_LAYER
-    META_LAYER --> META_STORE
+    EXT_DOCS --> RAW_STORE
+    INT_DOCS --> RAW_STORE
 
 
     %% ============================
     %% DATA PREPROCESSING
     %% ============================
-    PREPROC([Data Preprocessing and Chunk Creation
-    Cleaning and filtering
-    Create text chunks with metadata])
+    PREPROC([Data Preprocessing
+    - Cleaning and filtering
+    - Collation
+    - Extraction of text
+    - Creation of metadata])
 
-    META_LAYER --> PREPROC
-    PREPROC -->|Store processed text + metadata| PROC_STORE
+    RAW_STORE --> PREPROC
+
+    PREPROC -->|Processed text + metadata| PROC_OUT([Processed Text and Metadata])
+
+
+    %% ============================
+    %% STORE PROCESSED OUTPUT
+    %% ============================
+    subgraph BLOB2[Azure Blob Storage]
+        FINAL_PROC_STORE[Store processed text and metadata]
+    end
+
+    PROC_OUT --> FINAL_PROC_STORE
 
 
     %% ============================
     %% SENTIMENT ANALYSIS
     %% ============================
-    SA([Sentiment Analysis using Azure OpenAI])
+    SA([Sentiment Analysis
+    Azure OpenAI + Prompt Engineering
+    Generate theme-wise sentiment
+    with citations])
 
-    PROC_STORE -->|Processed text + metadata| SA
-    META_STORE -.->|Metadata lookup for traceback| SA
+    PROC_OUT --> SA
+    SA --> PROMPT_USED1([Prompt Used])
 
 
     %% ============================
-    %% OUTPUT
+    %% STORE GENERATED REPORTS
     %% ============================
-    REPORT([Final Summary and Theme-wise Sentiment Analysis])
-    SA --> REPORT
+    subgraph BLOB3[Azure Blob Storage]
+        REPORT_STORE[Store generated reports]
+    end
+
+    SA -->|External & Internal theme-wise summary reports| REPORT_STORE
+
+
+    %% ============================
+    %% REPORT VALIDATION
+    %% ============================
+    VALID([Report Validation
+    LangSmith (LLM as judge)
+    Validate generated reports])
+
+    REPORT_STORE --> VALID
+    VALID --> VAL_SUMMARY([Validation Summary])
+
+
+    %% ============================
+    %% PARALLEL PROMPT TESTING
+    %% ============================
+    GRIDGPT([Testing prompts in parallel
+    using Copilot and GridGPT])
+
+    PROMPT_USED1 --> GRIDGPT
+    GRIDGPT --> VAL_SUMMARY
+
+
+    %% ============================
+    %% REPORT COMPARISON
+    %% ============================
+    COMPARE([Report Comparison
+    Azure OpenAI + Prompt Engineering
+    Compare Internal vs External Reports])
+
+    VALID --> COMPARE
+    COMPARE --> PROMPT_USED2([Prompt Used])
+
+
+    %% ============================
+    %% FINAL OUTPUT
+    %% ============================
+    FINAL_OUTPUT([Consolidated Report:
+    Internal vs External Sentiment (PDF)])
+
+    COMPARE --> FINAL_OUTPUT
+
 ```
 
 Notes:
