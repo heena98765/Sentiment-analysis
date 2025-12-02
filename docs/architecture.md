@@ -16,7 +16,7 @@ flowchart TB
     EXT_SOURCES -->|Extract links via Tavily| TAVILY[Code Module to extract most relevant links according to themes]
     TAVILY -->EXT_DOCS[External Reports: PDF/Excel/CSV]
 
-    INT_SOURCES -->|Upload internal files| INT_DOCS[Internal Reports: PDF/Excel/CSV]
+    INT_SOURCES --> INT_DOCS[Internal Reports: PDF/Excel/CSV]
 
     subgraph BLOB1[Azure Blob Storage ]
         RAW_STORE[Raw Documents]
@@ -45,8 +45,9 @@ flowchart TB
 
     PROC_OUT --> SA
 
-    PROMPT_USED1[Prompt Used for Sentiment]
+    PROMPT_USED1[Prompt Used for Report Generation]
     SA --> PROMPT_USED1
+    PROMPT_USED2[Prompt Used for Report Comparison]
 
     subgraph BLOB3[Azure Blob Storage Reports]
         REPORT_STORE[Generated Reports]
@@ -60,13 +61,15 @@ flowchart TB
 
     GRIDGPT[Parallel Prompt Testing GridGPT Copilot]
     PROMPT_USED1 --> GRIDGPT
+    PROMPT_USED2 --> GRIDGPT
+    
     GRIDGPT --> VAL_SUMMARY
 
     VALID --> COMPARE
 
 
 
-    FINAL_OUTPUT[Consolidated Sentiment Report PDF]
+    FINAL_OUTPUT[Consolidated Analysis Report PDF]
     COMPARE --> FINAL_OUTPUT
 
 ```
