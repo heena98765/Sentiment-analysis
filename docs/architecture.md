@@ -16,7 +16,7 @@ flowchart TB
     EXT_SOURCES -->|Extract links via Tavily| TAVILY[Code Module to extract most relevant links according to themes]
     TAVILY -->EXT_DOCS[External Reports: PDF/Excel/CSV]
 
-    INT_SOURCES -->|Upload internal files| INT_DOCS[Internal Reports PDF Excel CSV]
+    INT_SOURCES -->|Upload internal files| INT_DOCS[Internal Reports: PDF/Excel/CSV]
 
     subgraph BLOB1[Azure Blob Storage ]
         RAW_STORE[Raw Documents]
@@ -64,7 +64,7 @@ flowchart TB
 
     VALID --> COMPARE
 
-    COMPARE --> PROMPT_USED2
+
 
     FINAL_OUTPUT[Consolidated Sentiment Report PDF]
     COMPARE --> FINAL_OUTPUT
