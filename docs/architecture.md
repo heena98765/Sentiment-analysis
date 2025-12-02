@@ -4,64 +4,79 @@ The diagram below shows a basic end-to-end workflow for a sentiment analysis too
 
 ```mermaid
 flowchart TB
- 
-    %% --- DEVELOPER INPUT ---
-    Developer([Developer])
- 
-    %% --- EXTERNAL DATA EXTRACTION ---
-    ExternalExtraction([Extracts doc links from external sources using Tavily])
-    Developer --> ExternalExtraction
- 
-    ExternalDocs([Surveys / Reports from External Sources])
-    ExternalExtraction --> ExternalDocs
- 
-    %% --- INTERNAL DATA COLLECTION ---
-    InternalCollection([Collects data from internal sources - Notes / Surveys / Reports])
-    Developer --> InternalCollection
- 
-    InternalDocs([Surveys / Reports from Internal Sources])
-    InternalCollection --> InternalDocs
- 
-    %% --- STORAGE OF RAW DATA ---
-    StoreRaw([Store documents from links and internal sources in Azure Blob Storage])
-    ExternalDocs --> StoreRaw
-    InternalDocs --> StoreRaw
- 
-    %% --- DATA PREPROCESSING ---
-    Preprocess([Data Preprocessing - Cleaning, Filtering, Collation, Text Extraction])
-    StoreRaw --> Preprocess
- 
-    StoreProcessed([Store processed text file in Azure Blob Storage])
-    Preprocess --> StoreProcessed
- 
-    %% --- SENTIMENT ANALYSIS ---
-    Sentiment([Sentiment Analysis using Azure OpenAI + Prompt Engineering])
-    Preprocess --> Sentiment
- 
-    Reports([External & Internal Theme-wise Summary Reports])
-    Sentiment --> Reports
- 
-    StoreReports([Store generated reports in Azure Blob Storage])
-    Reports --> StoreReports
- 
-    %% --- REPORT VALIDATION ---
-    Validation([Report Validation using LangSmith])
-    Reports --> Validation
- 
-    ValidationSummary([Validation Summary])
-    Validation --> ValidationSummary
- 
-    %% --- REPORT COMPARISON ---
-    Comparison([Report Comparison using Azure OpenAI + Prompt Engineering])
-    Validation --> Comparison
- 
-    Consolidated([Consolidated Report Comparing Internal & External Sentiments])
-    Comparison --> Consolidated
- 
-    %% --- PARALLEL PROMPT TESTING ---
-    ParallelTesting([Parallel Prompt Testing using Copilot and GridGPT])
-    Sentiment -.-> ParallelTesting
-    Comparison -.-> ParallelTesting
+
+    %% ================================
+    %%  INGESTION (External + Internal)
+    %% ================================
+
+    DEV([Developer])
+
+    EXT_SOURCES([External Sources<br/>(gov.uk, Ofgem, YouGov)])
+    INT_SOURCES([Internal Sources<br/>(Yonder Notes/Surveys/Reports)])
+
+    DEV --> EXT_SOURCES
+    DEV --> INT_SOURCES
+
+    EXT_SOURCES -->|Extract links via Tavily| TAVILY([Tavily API])
+    TAVILY -->|Download docs| RAW_DOCS_EXT([PDF/Excel/CSV])
+
+    INT_SOURCES -->|Upload internal files| RAW_DOCS_INT([PDF/Excel/CSV])
+
+
+    %% ================================
+    %%  RAW STORAGE
+    %% ================================
+    subgraph BLOB[**Azure Blob Storage**]
+        RAW_RAW[raw/<br/>Original Documents]
+        META_STORE[metadata/<br/>Document & Chunk Metadata]
+        PROC_STORE[processed_chunks/<br/>Processed Text + Metadata]
+    end
+
+    RAW_DOCS_EXT --> RAW_RAW
+    RAW_DOCS_INT --> RAW_RAW
+
+
+    %% ================================
+    %% METADATA & LINEAGE LAYER
+    %% ================================
+    META_LAYER([Metadata Extraction & Lineage Tracking<br/><br/>
+    - Assign document_id<br/>
+    - Capture source_link / file_path<br/>
+    - Extract page_number & offsets<br/>
+    - Prepare chunk metadata])
+
+    RAW_RAW --> META_LAYER
+    META_LAYER --> META_STORE
+
+
+    %% ================================
+    %% DATA PREPROCESSING
+    %% ================================
+    PREPROC([Data Preprocessing + Chunk Creation<br/><br/>
+    - Cleaning & filtering<br/>
+    - OCR if needed<br/>
+    - Text normalisation<br/>
+    - Create text chunks<br/>
+    - Attach chunk_id + doc_id + page_number])
+
+    META_LAYER --> PREPROC
+    PREPROC -->|Store processed text + metadata| PROC_STORE
+
+
+    %% ================================
+    %% SENTIMENT ANALYSIS
+    %% ================================
+    SA([Sentiment Analysis<br/>(Azure OpenAI + Prompt Engineering)])
+
+    PROC_STORE -->|Processed Text + Metadata| SA
+    META_STORE -.->|Metadata Lookup / Traceback| SA
+
+
+    %% ================================
+    %% OUTPUTS
+    %% ================================
+    REPORT([Final Summary + Theme-wise Sentiment Output])
+    SA --> REPORT
 ```
 
 Notes:
