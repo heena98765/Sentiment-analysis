@@ -1,4 +1,9 @@
-graph TD
+# Map reduce Summarization — Architecture Diagram
+
+The diagram below shows a basic end-to-end workflow for Map reduce Summarization technique.
+
+```mermaid
+   graph TD
     A[PDF Input] -->|Extract Text| B[Pages with Metadata]
     B -->|Chunk Text| C[Chunks with IDs<br/>file, page, chunk_id]
     
@@ -25,4 +30,5 @@ graph TD
     style I fill:#ffccbc
     style J fill:#ffccbc
     style K fill:#c8e6c9
-    style L fill:#a5d6a7
+    style L fill:#a5d6a7 
+```
